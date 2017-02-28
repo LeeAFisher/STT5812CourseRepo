@@ -1,0 +1,112 @@
+---
+title: "Writing Assignment"
+author: "Leave This Blank"
+bibliography: [PackagesUsed.bib]
+output: 
+    bookdown::html_document2
+date: 'Last compiled: `r format(Sys.time(), "%b %d, %Y")`'
+---
+## Directions {-}
+Recreate this document exactly using R Markdown. A great reference for creating technical documents with R Markdown is bookdown: Authoring Books and Technical Documents with R Markdown. Your YAML should look similar to:
+
+```
+title: "Writing Assignment"
+author: "Leave This Blank"
+bibliography: [packages.bib, ISLR.bib]
+output: 
+    bookdown::html_document2
+date: 'Last compiled: `r format(Sys.time(), "%b %d, %Y")`'
+```
+
+# From page 62 of [ISLR](https://www.google.com "ISLR") (James et al. 2013)
+Let $\hat{y}_i=\hat{β}_0+\hat{β}_1x_i$ be the prediction for $Y$ based on the $i^{\textrm{th}}$ value of $X$. Then 
+$e_i=y_i−\hat{y}_i$ represents the $i^{\textrm{th}}$ *residual* this is the difference between the 
+$i^{\textrm{th}}$ observed response and the $i^{\textrm{th}}$ response value that is predicted by our linear model. We define the residual sum of squares (RSS) as
+
+$$\mathrm{RSS}=e_1^2+e_2^2+⋯+e_n^2.$$
+or equivalently as
+\begin{equation}
+\mathrm{RSS}=(y_1−\hat{\beta}_0−\hat{\beta}_1x_1)^2+(y_2−\hat{\beta}_0−\hat{\beta}_1x_2)^2+\dots+(y_n−\hat{\beta}_0
+−\hat{\beta}_1x_n)^2
+\end{equation}
+
+The least squares approach chooses $\hat{β}_0$ and $\hat{β}_1$ to minimize the RSS. Using some calculus, one can 
+show that the minimizers are
+
+
+\begin{equation}
+\hat{β}_1=\frac{\sum_{i=1}^n(x_i−\bar{x})(y_i−\bar{y})}{\sum_{i=1}^n (x_i−\bar{x})^2},
+\end{equation}
+
+
+\begin{equation}
+\hat{β}_0=\overline{y}−\hat{β}_1 \overline{x},
+\end{equation}
+
+where $\bar{y}≡\frac{1}{n}\sum_{i=1}^n y_i$ and $\bar{x}≡\frac{1}{n}\sum_{i=1}^nx_i$ are the sample means.
+
+# From page 63 of [ISLR](https://www.google.com "ISLR") (James et al. 2013)
+Recall that we assume that the true relationship between $X$ and $Y$ takes the form $Y=f(X)+\epsilon$ for some 
+unknown function $f$, where $\epsilon$ is a mean-zero random error term. If $f$ is to be approximated by a linear 
+function, then we write this relationship as
+
+\begin{equation}
+Y=β_0+β_1+\epsilon
+\end{equation}
+
+Here $β_0$ is the intercept term—that is, the expected values of $Y$ when $X=0$, and $β_1$ is the slope—the average increase in $Y$ associated with a one-unit increase in $X$. The error term is a catch-all for what we miss with this simple model: the true relationship is probably not linear, there may be other variables that cause variation in $Y$, and there may be measurement error. We typically assume that the error term is independent of $X$.
+
+# From page 143 of [ISLR](https://www.google.com "ISLR") (James et al. 2013)
+
+To indicate that a $p$-dimensional random variable $X$ has a multivariate Gaussian distribution, we write $X∼N(μ,Σ)$. Here $E(X)=μ$ is the mean of $X$ (a vector with $p$ components), and $Cov(X)=Σ$is the $p\times p$ covariance matrix of $X$. Formally, the multivariate Gaussian density is defined as
+
+\begin{equation}
+f(x)=\frac{1}{(2π)^{p/2}|Σ|^{1/2}}\exp\left(−\frac{1}{2}(x−μ)^TΣ^{−1}(x−μ)\right)
+\end{equation}
+
+In the case of $p>1$ predictors, the LDA classifier assumes that the observations in the $k^{\textrm{th}}$ class are drawn from a multivariate Gaussian distribution $N(μ_k,Σ)$, where $μ_k$ is a class-specific mean vector, and $Σ$ is the covariance matrix that is common to all $K$ classes. Plugging the density function for the $k^{\textrm{th}}$ class, $f_k(X=x)$, into (3.1) and performing a little bit of algebra reveals that the Bayes classifier assigns an observation $X=x$ to the class for which
+
+
+\begin{equation}
+δ_k(x)=x^TΣ^{−1}μ_k−\frac{1}{2}μ^T_kΣ^{−1}μ_k+\logπ_k
+\end{equation}
+
+
+is the largest.
+
+# Inserting a graph
+
+```{r, position = "center"}
+set.seed(123)
+x <- rnorm(1000, 100, 15)
+DF <- data.frame(x = x)
+library(ggplot2)
+ggplot(data = DF, aes(x = x)) + 
+  geom_histogram(fill = "blue", color = "black", binwidth = 5) + 
+  theme_bw()
+
+```
+
+
+Figure 4.1: Your descriptive caption here
+```{r}
+xbar <- mean(x)
+SD <- sd(x)
+c(xbar, SD)
+
+```
+Figure 4.1 is unimodal with a mean of 100.2419 and a standard deviation of 14.8754.
+
+#Automagically Creating References
+Review your last assignment to create a file named `packages.bib` to cite the `ggplot2` package used to create Figure 4.1. Figure 4.1 was created with `ggplot2` by Wickham and Chang (2016). This document specifies the output as `bookdown::html_document2`. The function `bookdown::html_document2` is from bookdown written by Xie (2016).
+```{r}
+sessionInfo()
+
+```
+
+##References {-}
+James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani. 2013. *An Introduction to Statistical Learning: With Applications in R.* 1st ed. 2013, Corr. 6th printing 2016 edition. New York: Springer.
+
+Wickham, Hadley, and Winston Chang. 2016. *Ggplot2: Create Elegant Data Visualisations Using the Grammar of Graphics.* https://CRAN.R-project.org/package=ggplot2.
+
+Xie, Yihui. 2016. *Bookdown: Authoring Books and Technical Documents with R Markdown.* https://CRAN.R-project.org/package=bookdown.
