@@ -1,30 +1,97 @@
 ---
-title: "Project1.rmd"
-author: "Me"
+title: "Project 1"
+author: "Lee Fisher"
 date: "3/20/2017"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(DT)
+library(MASS)
+library(car)
 ```
 
-## R Markdown
+## Intro
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+First we'll follow the instructions to make a dataframe from the housing prices data set. Then we'll remove unneeded columns and relabel what is left over. Finally we'll show the data using the `datatable` command.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+HP <- read.table("http://ww2.amstat.org/publications/jse/datasets/homes76.dat.txt", header = TRUE)
+HP <- HP[,-c(1, 7, 10, 15, 16, 17, 18, 19)]
+setnames(HP, c('price', 'size', 'lot', 'bath', 'bed', 'year', 'age', 'garage', 'status', 'active', 'elem'))
+datatable(HP)
 ```
 
-## Including Plots
+The units for price are thousands of dollars, and the units for size are in thousands of square feet.
+We'll use the stepAIC command to build two models of this data set that predict price. We use forward selection and backwards elimination to make models for multiple linear regression.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+mod.be <- stepAIC(lm(price~.,data=HP), direction = c("backward"))
+mod.fs <- stepAIC(lm(price~.,data=HP), direction = c("forward"))
+mean(resid(mod.be)^2)
+mean(resid(mod.fs)^2)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Going by the R-Squared values the model obtained by forwards selection is slightly better than the model obtained by backwards elimination. I'm not sure why this model is better, my guess would be that the backwards elimination process is more likely to remove variables that are predictive of price better separately than in conjunction with others. Next we'll go ahead and make a new model that regresses on all variables except for status and year. We'll produce a summary and graph the residuals of this model.
+
+```{r}
+mod1 <- lm(price~.-status-year,data=HP)
+summary(mod1)
+residualPlots(mod1)
+```
+
+The Adjusted R^2 value for `mod1` is 0.4411. From looking at the residual plots of several of the variables, we can guess that price will depend on some of them in a quadratic manner rather just a linear manner. Now we'll create a new model, this one is similar but it will also use the variables `bath:bed` and `age^2`. We'll also report the adjusted R squared value for this new model.
+
+```{r}
+mod2 <- lm(price~.-status-year+age^2+bath:bed,data=HP)
+summary(mod2)$adj.r.squared
+```
+
+Next we'll take the same model and make another modification, `mod3`. We'll return the adjusted R-Squared value and run an analysis of variance between `mod3` and `mod2`
+
+```{r}
+mod3 <- lm(price~.+bath:bed -age-status - year + poly(age,2)-elem+I(elem == 'edison')+I(elem == 'harris')
+            ,data=HP)
+summary(mod3)
+anova(mod3, mod2)
+```
+
+It doesn't completely agree with the model from the paper. I wasn't able to figure out why it doesn't match though. Up to computing the coefficients on variables except for `age` the model agrees with the report. The adjusted R-Squared value for model 3 is 0.5175 which is not not quite as good as what was found in the report. We'll go ahead and report the training errors for each model, and the run a prediction with model 3 to tie things up: 
+
+
+
+
+```{r}
+mean(summary(mod.fs)$residuals^2)
+mean(summary(mod.be)$residuals^2)
+mean(summary(mod1)$residuals^2)
+mean(summary(mod2)$residuals^2)
+mean(summary(mod3)$residuals^2)
+```
+Model 3 comes out with the smallest test mean squared prediction error. We'll use model 3 to create a 95% prediction interval for a home with the following features: 1879 feet, lot size category 4, two and a half baths, three bedrooms, built in 1975, two-car garage, and near Parker Elementary School.
+
+
+```{r}
+predict(mod3, data.frame(size = 1.879, status = 'sld', active = 0, year = 1975, lot = 4, bath = 2.5, bed = 3,age = 0.5, garage = 2, elem =  'parker'), level = 0.95)
+```
+
+The prediction comes out with about \$252,000 for this houses value.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
