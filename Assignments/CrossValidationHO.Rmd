@@ -23,7 +23,7 @@ knitr::opts_chunk$set(fig.show = 'as.is', fig.height = 4, fig.width = 4, prompt 
 
 The basic idea behind the validation set approach is to split the available data into a training set and a testing set. A regression model is developed using only the training set. Consider Figure \@ref(fig:vsa) which illustrates a split of the available data into a training set and a testing set. 
 
-```{r, label = "vsa", echo = FALSE, fig.cap = "Validation set approach"}
+```{r, label = "vsa", echo = FALSE, fig.cap = "Validation set approach", eval = FALSE}
 knitr::include_graphics("./PNG/valdset.png", dpi = 96)
 ```
 
@@ -38,7 +38,7 @@ The percent of values that are allocated into training and testing may vary base
 
 The leave-one-out cross-validation (LOOCV) eliminates the problem of variability in MSPE present in the validation set approach. The LOOCV is similar to the validation set approach as the available $n$ observations are split into training and testing sets. The difference is that each of the available $n$ observations are split into $n$ training and $n$ testing sets where each of the $n$ training sets consist of $n - 1$ observations and each of the testing sets consists of a single different value from the original $n$ observations. Figure \@ref(fig:LOOC) provides a schematic display of the leave-one-out cross-validation process with testing sets (light shade) and training sets (dark shade) for a data set of $n$ observations. 
 
-```{r, label = "LOOC", echo = FALSE, fig.cap = "Leave-one-out cross validation"}
+```{r, label = "LOOC", echo = FALSE, fig.cap = "Leave-one-out cross validation", eval = FALSE}
 knitr::include_graphics("./PNG/loocv.png", dpi = 96)
 ```
 
@@ -53,7 +53,7 @@ The MSPE is computed with each testing set resulting in $n$ values of MSPE. The 
 
 $k$-fold cross-validation is similar to LOOCV in that the available data is split into training sets and testing sets; however, instead of creating $n$ different training and testing sets, $k$ folds/groups of training and testing sets are created where $k < n$ and each fold consists of roughly $n/k$ values in the testing set and $1 - n/k$ values in the training set. Figure \@ref(fig:KFCV) shows a schematic display of 5-fold cross-validation. The lightly shaded rectangles are the testing sets and the darker shaded rectangles are the training sets. 
 
-```{r, label = "KFCV", echo = FALSE, fig.cap = "Five fold cross-validation"}
+```{r, label = "KFCV", echo = FALSE, fig.cap = "Five fold cross-validation", eval = FALSE}
 knitr::include_graphics("./PNG/cv.png", dpi = 96)
 ```
 
@@ -172,17 +172,18 @@ MSPEtest
 * Note how the answers of your classmates are all different.  The validation estimate of the test MSPE can be highly variable.  
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+library(PASWR2)
+n <- nrow(HSWRESTLER)
+train <- sample(n, floor(0.8*n), replace = FALSE)
+trainSET <- HSWRESTLER[train,]
+testSET <- HSWRESTLER[(-train),]
+dim(trainSET)
+dim(testSET)
+modf <- lm(hwfat ~abs + triceps, data= trainSET)
+pred <- predict(modf,newdata= testSET)
+MSPE <- mean((testSET$hwfat - pred)^2)
+c(MSPE, sqrt(MSPE))
+
 ```
 
 
@@ -220,22 +221,32 @@ ggplot(data = DF2, aes(x = x, y = MSPE)) +
 * Modify the code above to recreate a graph similar to the right side of Figure 5.2 on page 178 of @james_introduction_2013.  Hint: Place a `for` loop before `IND`.
 
 ```{r, fig.width = 5, fig.height = 5}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+library(ISLR)
+n <- nrow(Auto)
+plot(1:10, type ="n", xlab = "Degree of Polynomial", ylim = c(15, 30), 
+     ylab = "Mean Squared Prediction Error") 
+for(j in 1:10) {
+IND <- sample(1:n, size = floor(n/2), replace = FALSE)
+train <- Auto[IND, ]
+test <- Auto[-IND, ]
+for(i in 1:10){
+    mod <- lm(mpg ~ poly(horsepower, i), data = train)
+    pred <- predict(mod, newdata = test)
+    MSPE[i] <- mean((test$mpg - pred)^2)
+  }
+lines(1:10, MSPE, col = rgb(j/10,0,0))
+points(1:10, MSPE, col = rgb(j/10,0,0), pch = 19)}
+
+
+# ggplot2 approach
+DF2 <- data.frame(x = 1:10, MSPE = MSPE)
+ggplot(data = DF2, aes(x = x, y = MSPE)) + 
+  geom_point(color = "red", size = 2) + 
+  geom_line(color = "red") + 
+  theme_bw() + 
+  ylim(15, 30) + 
+  scale_x_continuous(breaks = 1:10) + 
+  labs(x = "Degree of Polynomial", y = "Mean Squared Prediction Error")
 ```
 
 
@@ -267,19 +278,19 @@ weighted.mean(MSPE, table(folds)/sum(folds))
 
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+set.seed(1)
+k <- 8
+MSPE <- numeric(k)
+folds <- sample(x = 1:k, size = nrow(HSWRESTLER), replace = TRUE)
+xtabs(~folds)
+sum(xtabs(~folds))
+for(j in 1:k){
+  modf <- lm(hwfat ~abs + triceps, data= HSWRESTLER[folds != j, ])
+  pred <- predict(modf, newdata = HSWRESTLER[folds ==j, ])
+  MSPE[j] <- mean((HSWRESTLER[folds == j, ]$hwfat - pred)^2) 
+}
+MSPE
+weighted.mean(MSPE, table(folds)/sum(folds))
 ```
 
 
@@ -299,10 +310,10 @@ cv.err
 * Compute $\textrm{CV}_8$ for `modf` using `cv.glm`.  Recall that `modf` was created from regressing `hwfat` onto `abs` and `triceps`. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
+set.seed(1)
+glm.modf <- glm(hwfat ~abs + triceps, data= HSWRESTLER)
+cv.err <- cv.glm(data = HSWRESTLER, glmfit = glm.modf, K = 8)$delta[1]
+cv.err
 ```
 
 
@@ -334,41 +345,43 @@ cv <- numeric(k)
 * Use a `for` loop to run the above code nine times.  The result should look similar to the right side of Figure 5.4 on page 180 of @james_introduction_2013. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+
+plot(1:10, type ="n", xlab = "Degree of Polynomial", ylim = c(16, 26), 
+     ylab = "Mean Squared Prediction Error", main = "10-fold CV") 
+k <- 10 # number of folds
+MSPE <- numeric(k)
+cv <- numeric(k)
+for(m in 1:10){
+  for(i in 1:10){
+    folds <- sample(x = 1:k, size = nrow(Auto), replace = TRUE)
+    for(j in 1:k){
+      mod <- lm(mpg ~ poly(horsepower, i, raw = TRUE), data = Auto[folds != j, ])
+      pred <- predict(mod, newdata = Auto[folds ==j, ])
+      MSPE[j] <- mean((Auto[folds == j, ]$mpg - pred)^2) 
+    }
+    cv[i] <- weighted.mean(MSPE, table(folds)/sum(folds))
+  }
+  lines(1:10, cv, col = rgb(m/10,0,0))
+  points(1:10, cv, col = rgb(m/10,0,0), pch = 19)}
 ```
 
 * Use the function `cv.glm` to create similar a graph to the right side of Figure 5.4 on page 180 of @james_introduction_2013. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+plot(1:10, type ="n", xlab = "Degree of Polynomial", ylim = c(16, 26), 
+     ylab = "Mean Squared Prediction Error", main = "10-fold CV") 
+k <- 10 # number of folds
+
+for(j in 1:9){
+  cv.err = numeric(10)
+    for(i in 1:k){
+      glm.fit <- glm(mpg ~ poly(horsepower, i, raw = TRUE), data = Auto)
+      cv.err[i] <- cv.glm(data = Auto, glmfit = glm.fit, K =k)$delta[1]
+    }
+    lines(1:10, cv.err, col = rgb(j/10,0,0))
+    points(1:10, cv.err, col = rgb(j/10,0,0), pch = 19)
+  }
+
 ```
 
 
@@ -394,16 +407,17 @@ mean(MSPE)
 * Compute $\textrm{CV}_n$ for `modf`.  Recall that `modf` was created from regressing `hwfat` onto `abs` and `triceps`. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
+set.seed(1)
+k <- nrow(HSWRESTLER)
+MSPE <- numeric(k)
+folds <- sample(x = 1:k, size = nrow(HSWRESTLER), replace = FALSE)  
+
+for(j in 1:k){
+  modf <- lm(hwfat ~abs + triceps, data= HSWRESTLER[folds !=j, ])
+  pred <- predict(modf, newdata = HSWRESTLER[folds ==j, ])
+  MSPE[j] <- mean((HSWRESTLER[folds == j, ]$hwfat - pred)^2) 
+}
+mean(MSPE)
 ```
 
 
@@ -423,10 +437,10 @@ CVn
 * Compute $\textrm{CV}_n$ for `modf` using the mathematical shortcut. Recall that `modf` was created from regressing `hwfat` onto `abs` and `triceps`. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
+modf <- lm(hwfat ~ abs + triceps, data = HSWRESTLER)
+h <- hatvalues(modf)
+CVn <- mean(((HSWRESTLER$hwfat - predict(modf))/(1 - h))^2)
+CVn
 ```
 
 
@@ -448,10 +462,9 @@ cv.err
 * Compute $\textrm{CV}_n$ for `modf` using `cv.glm`.  Recall that `modf` was created from regressing `hwfat` onto `abs` and `triceps`. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
+glm.fit <- glm(hwfat ~ abs + triceps, data = HSWRESTLER)
+cv.err <- cv.glm(data = HSWRESTLER, glmfit = glm.fit)$delta[1]
+cv.err
 ```
 
 
@@ -460,37 +473,36 @@ cv.err
 *  Create a graph similar to the left side of Figure 5.4 on page 180 of @james_introduction_2013. 
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+plot(1:10, type ="n", xlab = "Degree of Polynomial", ylim = c(16, 26), 
+     ylab = "Mean Squared Prediction Error", main = "LOOCV") 
+
+cv.err = numeric(10)
+
+for(j in 1:10){
+    glm.fit <- glm(mpg ~ poly(horsepower, j, raw = TRUE), data = Auto)
+    cv.err[j] <- cv.glm(data = Auto, glmfit = glm.fit)$delta[1]
+}
+
+lines(1:10, cv.err)
+points(1:10, cv.err, pch = 19)
 ```
 
 Using the short cut formula:
 
 ```{r}
-# Your Code Here
-#
-#
-#
-#
-#
-#
-#
-#
-#
+plot(1:10, type ="n", xlab = "Degree of Polynomial", ylim = c(16, 26), 
+     ylab = "Mean Squared Prediction Error", main = "LOOCV") 
+
+cv.err = numeric(10)
+
+for(j in 1:10){
+    glm.fit <- glm(mpg ~ poly(horsepower, j, raw = TRUE), data = Auto)
+    h <- hatvalues(glm.fit)
+    cv.err[j] <- mean(((Auto$mpg - predict(glm.fit))/(1 - h))^2)
+}
+
+lines(1:10, cv.err)
+points(1:10, cv.err, pch = 19)
 ```
 
 
